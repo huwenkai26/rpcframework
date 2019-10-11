@@ -15,10 +15,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.fenghuaxz.rpcframework.Hook.AbstractMethodCallHook.doCall;
 import static com.fenghuaxz.rpcframework.Hook.AbstractMethodCallHook.doCompleted;
 
-public final class CallFuture extends IFutureBase<Object, AsynchronousHandler> implements ChannelFuture<Object> {
+public final class WriteTask<V> extends IFutureBase<V, AsynchronousHandler<V>> implements ChannelFuture<V> {
 
     private static final AtomicInteger idCounter = new AtomicInteger();
-    private static final Map<Channel, Map<Integer, CallFuture>> infos = new ConcurrentHashMap<>();
+    private static final Map<Channel, Map<Integer, WriteTask>> infos = new ConcurrentHashMap<>();
 
     private final io.netty.channel.ChannelFutureListener SEND_FAILURE_HANDLER = future -> {
         if (!future.isSuccess()) {
@@ -30,7 +30,7 @@ public final class CallFuture extends IFutureBase<Object, AsynchronousHandler> i
     private final Method mMethod;
     private final Object[] mParameters;
 
-    public CallFuture(Channel channel, Method method, Object[] parameters) {
+    public WriteTask(Channel channel, Method method, Object[] parameters) {
         this.mChannel = channel;
         this.mMethod = method;
         this.mParameters = parameters;
@@ -41,7 +41,7 @@ public final class CallFuture extends IFutureBase<Object, AsynchronousHandler> i
         return this.mChannel;
     }
 
-    public void call(Remote.Type type) {
+    public void write(Remote.Type type) {
         final Rpc rpc;
         final Class<?> cls = this.mMethod.getDeclaringClass();
         if ((rpc = cls.getAnnotation(Rpc.class)) == null) {
@@ -58,7 +58,7 @@ public final class CallFuture extends IFutureBase<Object, AsynchronousHandler> i
         doCall(this.mMethod, this.mParameters, this.mChannel, type);
 
         if (!req.isOneway()) {
-            Map<Integer, CallFuture> infoMap;
+            Map<Integer, WriteTask> infoMap;
             if ((infoMap = infos.get(mChannel)) == null) {
                 infos.put(mChannel, infoMap = new ConcurrentHashMap<>());
             }
@@ -77,16 +77,16 @@ public final class CallFuture extends IFutureBase<Object, AsynchronousHandler> i
     }
 
     static void doResponse(Channel channel, XResponse response) {
-        final Map<Integer, CallFuture> map;
+        final Map<Integer, WriteTask> map;
         if ((map = infos.get(channel)) != null) {
-            final CallFuture future;
-            if ((future = map.remove(response.getId())) != null) {
-                doCompleted(future.mMethod, channel, response.getResult(), response.getCause());
+            final WriteTask task;
+            if ((task = map.remove(response.getId())) != null) {
+                doCompleted(task.mMethod, channel, response.getResult(), response.getCause());
                 final Throwable cause = response.getCause();
                 if (cause != null)
-                    future.setFailure(cause);
+                    task.setFailure(cause);
                 else {
-                    future.setSuccess(response.getResult());
+                    task.setSuccess(response.getResult());
                 }
             }
         }

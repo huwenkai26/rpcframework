@@ -38,11 +38,11 @@ final class Events extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
         final Channel channel = (Channel) ctx.channel();
 
         if (msg instanceof XResponse) {
-            CallFuture.doResponse(channel, (XResponse) msg);
+            WriteTask.doResponse(channel, (XResponse) msg);
             return;
         }
 
@@ -78,7 +78,7 @@ final class Events extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) {
         final Channel channel = (Channel) ctx.channel();
         channel.runTaskWithContext(() -> {
             for (Template template : channel.context().templates()) {
@@ -88,9 +88,9 @@ final class Events extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) {
         final Channel channel;
-        CallFuture.doInactive(channel = (Channel) ctx.channel());
+        WriteTask.doInactive(channel = (Channel) ctx.channel());
         channel.runTaskWithContext(() -> {
             for (Template template : channel.context().templates()) {
                 template.doInactive(channel);
@@ -99,7 +99,7 @@ final class Events extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         ctx.close();
         final Channel channel = (Channel) ctx.channel();
         channel.runTaskWithContext(() -> {

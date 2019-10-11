@@ -3,10 +3,10 @@ package com.fenghuaxz.rpcframework.concurrent;
 import java.util.Collection;
 import java.util.concurrent.*;
 
-public abstract class IFutureBase<V, L extends IFutureListener> implements IFuture<V> {
+public abstract class IFutureBase<V, L extends IFutureListener<? extends IFuture<V, L>>> implements IFuture<V, L> {
 
     private volatile Object result;
-    private Collection<L> listeners;
+    private Collection<IFutureListener<?>> listeners;
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
@@ -84,8 +84,8 @@ public abstract class IFutureBase<V, L extends IFutureListener> implements IFutu
         return null;
     }
 
-
-    public IFuture<V> addListener(L listener) {
+    @Override
+    public IFuture<V, L> addListener(L listener) {
         if (listener == null) {
             throw new NullPointerException("listener");
         }
@@ -106,8 +106,8 @@ public abstract class IFutureBase<V, L extends IFutureListener> implements IFutu
         return this;
     }
 
-
-    public IFuture<V> removeListener(L listener) {
+    @Override
+    public IFuture<V, L> removeListener(L listener) {
         if (listener == null) {
             throw new NullPointerException("listener");
         }
@@ -119,12 +119,11 @@ public abstract class IFutureBase<V, L extends IFutureListener> implements IFutu
     }
 
     @Override
-    public IFuture<V> await() throws InterruptedException {
+    public IFuture<V, L> await() throws InterruptedException {
         return await0(true);
     }
 
-
-    private IFuture<V> await0(boolean interruptable) throws InterruptedException {
+    private IFuture<V, L> await0(boolean interruptable) throws InterruptedException {
         if (!isDone()) {
 
             if (interruptable && Thread.interrupted()) {
@@ -216,7 +215,7 @@ public abstract class IFutureBase<V, L extends IFutureListener> implements IFutu
     }
 
     @Override
-    public IFuture<V> awaitUninterruptibly() {
+    public IFuture<V, L> awaitUninterruptibly() {
         try {
             return await0(false);
         } catch (InterruptedException e) {
@@ -291,14 +290,14 @@ public abstract class IFutureBase<V, L extends IFutureListener> implements IFutu
 
     private void notifyListeners() {
         if (listeners != null) {
-            for (L listener : listeners) {
+            for (IFutureListener listener : listeners) {
                 notifyListener(listener);
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void notifyListener(L listener) {
+    private void notifyListener(IFutureListener listener) {
         try {
             listener.completed(this);
         } catch (Exception ignored) {

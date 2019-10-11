@@ -3,7 +3,7 @@ package com.fenghuaxz.rpcframework.concurrent;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public interface IFuture<V> extends Future<V> {
+public interface IFuture<V, L extends IFutureListener<? extends IFuture<V, ?>>> extends Future<V> {
 
     V getNow();
 
@@ -13,15 +13,19 @@ public interface IFuture<V> extends Future<V> {
 
     boolean isSuccess();
 
-    IFuture<V> await() throws InterruptedException;
+    IFuture<V, L> await() throws InterruptedException;
 
     boolean await(long timeoutMillis) throws InterruptedException;
 
     boolean await(long timeout, TimeUnit timeunit) throws InterruptedException;
 
-    IFuture<V> awaitUninterruptibly();
+    IFuture<V, L> awaitUninterruptibly();
 
     boolean awaitUninterruptibly(long timeoutMillis);
 
     boolean awaitUninterruptibly(long timeout, TimeUnit timeunit);
+
+    IFuture<V, L> addListener(L listener);
+
+    IFuture<V, L> removeListener(L listener);
 }  

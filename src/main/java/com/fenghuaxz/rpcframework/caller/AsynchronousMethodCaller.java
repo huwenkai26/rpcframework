@@ -1,6 +1,6 @@
 package com.fenghuaxz.rpcframework.caller;
 
-import com.fenghuaxz.rpcframework.CallFuture;
+import com.fenghuaxz.rpcframework.WriteTask;
 import com.fenghuaxz.rpcframework.AsynchronousHandler;
 import com.fenghuaxz.rpcframework.Remote;
 import com.fenghuaxz.rpcframework.TimerHolder;
@@ -26,13 +26,14 @@ public class AsynchronousMethodCaller extends AbstractMethodCaller {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        CallFuture mMethod = new CallFuture(this.mChannel, method, args);
-        TimeoutTask task = new TimeoutTask(mMethod, handler);
+        WriteTask writeTask = new WriteTask<>(this.mChannel, method, args);
+        TimeoutTask timeoutTask = new TimeoutTask(writeTask, handler);
         final Timeout timeout = getTimeout(method);
-        task.setHold(TimerHolder.newTimeout(task, timeout.value(), timeout.unit()));
-        mMethod.addListener(task);
-        mMethod.call(Remote.Type.ASYNC);
+        timeoutTask.setHold(TimerHolder.newTimeout(timeoutTask, timeout.value(), timeout.unit()));
+        writeTask.addListener(timeoutTask);
+        writeTask.write(Remote.Type.ASYNC);
         return super.invoke(proxy, method, args);
     }
 
@@ -55,11 +56,11 @@ public class AsynchronousMethodCaller extends AbstractMethodCaller {
 
     static class TimeoutTask implements TimerTask, AsynchronousHandler<Object> {
 
-        private final CallFuture mMethod;
+        private final WriteTask mMethod;
         private final AsynchronousHandler handler;
         private volatile io.netty.util.Timeout hold;
 
-        TimeoutTask(CallFuture method, AsynchronousHandler handler) {
+        TimeoutTask(WriteTask method, AsynchronousHandler handler) {
             this.mMethod = method;
             this.handler = handler;
         }
