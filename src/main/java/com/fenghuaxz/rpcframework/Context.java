@@ -1,0 +1,88 @@
+package com.fenghuaxz.rpcframework;
+
+import com.fenghuaxz.rpcframework.annotations.Nullable;
+import com.fenghuaxz.rpcframework.annotations.Rpc;
+import io.netty.util.internal.ConcurrentSet;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+
+public abstract class Context {
+
+    private final Map<String, Service> mServices = new ConcurrentHashMap<>();
+    private final Map<Class<? extends Template>, Template> mTemplates = new ConcurrentHashMap<>();
+    private final Set<Hook> mHooks = new ConcurrentSet<>();
+    private volatile Executor mExecutor = Runnable::run;
+
+
+    Context() {
+        addHook(new Nullable.EmptyParameterValidator());
+    }
+
+    public abstract void dispose();
+
+    Service getService(String name) {
+        Service service;
+        if ((service = this.mServices.get(name)) == null) {
+            throw new IllegalStateException("No service added: " + name);
+        }
+        return service;
+    }
+
+    public <T extends Service> void addService(T service) {
+        if (service == null) {
+            throw new NullPointerException("service");
+        }
+
+        for (Template template : service.newTemplates()) {
+            this.mTemplates.put(template.getClass(), template);
+        }
+
+        for (Class<?> cls : service.getClass().getInterfaces()) {
+            Rpc rpc;
+            if ((rpc = cls.getAnnotation(Rpc.class)) == null) {
+                throw new IllegalStateException("Must @Rpc in: " + cls.getName());
+            }
+            String name = rpc.value();
+            this.mServices.put(name.isEmpty() ? cls.getName() : name, service);
+        }
+    }
+
+    public <T extends Hook> void addHook(T hook) {
+        if (hook == null) {
+            throw new NullPointerException("hook");
+        }
+        this.mHooks.add(hook);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends Template> T getTemplate(Class<T> cls) {
+        T handler;
+        if ((handler = (T) this.mTemplates.get(cls)) == null) {
+            throw new IllegalStateException("No template added: " + cls.getName());
+        }
+        return handler;
+    }
+
+    Collection<Template> templates() {
+        return this.mTemplates.values();
+    }
+
+    Collection<Hook> hooks() {
+        return this.mHooks;
+    }
+
+    public <T extends Executor> void setExecutor(T executor) {
+        if (executor == null) {
+            throw new NullPointerException("executor");
+        }
+        this.mExecutor = executor;
+    }
+
+    public void runTask(Runnable task) {
+        this.mExecutor.execute(task);
+    }
+}
