@@ -2,7 +2,7 @@ package com.fenghuaxz.rpcframework.channels;
 
 import com.fenghuaxz.rpcframework.Context;
 import com.fenghuaxz.rpcframework.Template;
-import com.fenghuaxz.rpcframework.AsynchronousHandler;
+import com.fenghuaxz.rpcframework.AsyncHandler;
 import com.fenghuaxz.rpcframework.caller.AsynchronousMethodCaller;
 import com.fenghuaxz.rpcframework.caller.OnewayMethodCaller;
 import com.fenghuaxz.rpcframework.caller.SynchronousMethodCaller;
@@ -71,7 +71,7 @@ public class NioSocketChannel extends io.netty.channel.socket.nio.NioSocketChann
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T async(Class<T> cls, AsynchronousHandler<?> handler) {
+    public <T> T async(Class<T> cls, AsyncHandler<?> handler) {
         return (T) Proxy.newProxyInstance(cls.getClassLoader(), new Class[]{cls}
                 , new AsynchronousMethodCaller(this, handler));
     }

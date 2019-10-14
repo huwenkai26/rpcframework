@@ -24,7 +24,11 @@ public class RPCClient extends Context implements Remote {
     private final Bootstrap b = new Bootstrap();
 
     public RPCClient() {
-        this(new DefaultEventExecutorGroup(Runtime.getRuntime().availableProcessors() * 2));
+        this(1);
+    }
+
+    public RPCClient(int nThreads) {
+        this(new DefaultEventExecutorGroup(nThreads));
     }
 
     public RPCClient(EventExecutorGroup eventExecutors) {
@@ -58,15 +62,16 @@ public class RPCClient extends Context implements Remote {
     }
 
     public RPCClient connect() throws Exception {
-        if (isConnected()) this.mChannel.close();
         final Thread thread = Thread.currentThread();
         final AtomicReference<Exception> err = new AtomicReference<>();
         new Thread(getClass().getSimpleName() + " - " + b.config().remoteAddress()) {
             @Override
             public void run() {
                 try {
+                    Channel last = mChannel;
                     final ChannelFuture future = b.connect().sync();
                     mChannel = (Channel) future.channel();
+                    if (last != null && last.isActive()) last.close();
                     LockSupport.unpark(thread);
                     future.channel().closeFuture().sync();
                 } catch (Exception e) {
@@ -91,27 +96,25 @@ public class RPCClient extends Context implements Remote {
         this.eventExecutors.shutdownGracefully();
     }
 
+    private Channel ensureNonNull() {
+        if (mChannel == null) {
+            this.mChannel = (Channel) b.connect(new InetSocketAddress(0)).channel();
+        }
+        return this.mChannel;
+    }
+
     @Override
     public <T> T oneway(Class<T> cls) {
-        if (!isConnected()) {
-            throw new IllegalStateException("closed");
-        }
-        return this.mChannel.oneway(cls);
+        return ensureNonNull().oneway(cls);
     }
 
     @Override
     public <T> T call(Class<T> cls) {
-        if (!isConnected()) {
-            throw new IllegalStateException("closed");
-        }
-        return this.mChannel.call(cls);
+        return ensureNonNull().call(cls);
     }
 
     @Override
-    public <T> T async(Class<T> cls, AsynchronousHandler<?> handler) {
-        if (!isConnected()) {
-            throw new IllegalStateException("closed");
-        }
-        return this.mChannel.async(cls, handler);
+    public <T> T async(Class<T> cls, AsyncHandler<?> handler) {
+        return ensureNonNull().async(cls, handler);
     }
 }

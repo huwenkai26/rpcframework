@@ -1,11 +1,7 @@
 package example;
 
-import com.fenghuaxz.rpcframework.AsynchronousHandler;
-import com.fenghuaxz.rpcframework.RPCClient;
-import com.fenghuaxz.rpcframework.RPCServer;
+import com.fenghuaxz.rpcframework.*;
 import com.fenghuaxz.rpcframework.channels.ChannelFuture;
-import com.fenghuaxz.rpcframework.concurrent.IFuture;
-import com.fenghuaxz.rpcframework.concurrent.IFutureListener;
 
 import java.net.InetSocketAddress;
 
@@ -16,11 +12,11 @@ public class AppMain {
         RPCServer server = new RPCServer().bind(new InetSocketAddress(8000));
         server.addService(new LoginManagerImpl());
 
-
         RPCClient client = new RPCClient().setAddress(new InetSocketAddress(8000)).connect();
 
-        AsynchronousHandler handler = new AsynchronousHandler<Integer>() {
-            AsynchronousHandler instance;
+
+        AsyncHandler listener = new AsyncHandler<Integer>() {
+            AsyncHandler instance;
 
             @Override
             public void completed(ChannelFuture<Integer> future) {
@@ -39,6 +35,6 @@ public class AppMain {
                 }
             }
         };
-        client.async(LoginManager.class, handler).login("a", "p", 0);
+        client.async(LoginManager.class, listener).login("a", "p", 0);
     }
 }

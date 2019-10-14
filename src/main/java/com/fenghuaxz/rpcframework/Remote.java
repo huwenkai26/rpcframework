@@ -7,10 +7,10 @@ public interface Remote {
     <T> T call(Class<T> cls);
 
     default <T> T async(Class<T> cls) {
-        return async(cls, AsynchronousHandler.CLOSE_ON_FAILURE);
+        return async(cls, AsyncHandler.CLOSE_ON_FAILURE);
     }
 
-    <T> T async(Class<T> cls, AsynchronousHandler<?> handler);
+    <T> T async(Class<T> cls, AsyncHandler<?> handler);
 
     enum Type {
         ONEWAY, SYNC, ASYNC

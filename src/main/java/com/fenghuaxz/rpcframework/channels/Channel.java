@@ -6,6 +6,7 @@ import com.fenghuaxz.rpcframework.Remote;
 import com.fenghuaxz.rpcframework.codec.ByteToMessageCodec;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPromise;
+import io.netty.channel.EventLoop;
 
 import java.net.InetSocketAddress;
 
@@ -13,11 +14,15 @@ public interface Channel extends Remote {
 
     boolean isActive();
 
-    ChannelFuture close();
-
     Context context();
 
-    <T extends ByteToMessageCodec> void setCodec(T codec);
+    ChannelFuture close();
+
+    EventLoop eventLoop();
+
+    <T extends ByteToMessageCodec>
+
+    void setCodec(T codec);
 
     void runTaskWithContext(Runnable task);
 

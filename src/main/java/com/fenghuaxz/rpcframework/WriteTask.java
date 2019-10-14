@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.fenghuaxz.rpcframework.Hook.AbstractMethodCallHook.doCall;
 import static com.fenghuaxz.rpcframework.Hook.AbstractMethodCallHook.doCompleted;
 
-public final class WriteTask<V> extends IFutureBase<V, AsynchronousHandler<V>> implements ChannelFuture<V> {
+public final class WriteTask<V> extends IFutureBase<V, AsyncHandler<V>> implements ChannelFuture<V> {
 
     private static final AtomicInteger idCounter = new AtomicInteger();
     private static final Map<Channel, Map<Integer, WriteTask>> infos = new ConcurrentHashMap<>();

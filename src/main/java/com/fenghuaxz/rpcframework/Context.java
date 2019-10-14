@@ -85,4 +85,31 @@ public abstract class Context {
     public void runTask(Runnable task) {
         this.mExecutor.execute(task);
     }
+
+    public static Object takeTypeDefaultValue(Class<?> type) {
+        if (type == null || !type.isPrimitive()) {
+            return null;
+        }
+
+        switch (type.getName()) {
+            case "long":
+                return (long) 0;
+            case "double":
+                return (double) 0;
+            case "int":
+                return 0;
+            case "float":
+                return (float) 0;
+            case "boolean":
+                return false;
+            case "short":
+                return (short) 0;
+            case "char":
+                return (char) 0;
+            case "byte":
+                return (byte) 0;
+            default:
+                return null;
+        }
+    }
 }

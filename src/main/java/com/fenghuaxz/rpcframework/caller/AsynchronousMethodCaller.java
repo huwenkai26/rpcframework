@@ -1,9 +1,6 @@
 package com.fenghuaxz.rpcframework.caller;
 
-import com.fenghuaxz.rpcframework.WriteTask;
-import com.fenghuaxz.rpcframework.AsynchronousHandler;
-import com.fenghuaxz.rpcframework.Remote;
-import com.fenghuaxz.rpcframework.TimerHolder;
+import com.fenghuaxz.rpcframework.*;
 import com.fenghuaxz.rpcframework.annotations.Timeout;
 import com.fenghuaxz.rpcframework.channels.Channel;
 import com.fenghuaxz.rpcframework.channels.ChannelFuture;
@@ -14,15 +11,15 @@ import java.util.concurrent.TimeoutException;
 
 public class AsynchronousMethodCaller extends AbstractMethodCaller {
 
-    private final AsynchronousHandler handler;
+    private final AsyncHandler handler;
 
     @SuppressWarnings("unchecked")
-    public AsynchronousMethodCaller(Channel channel, AsynchronousHandler<?> handler) {
+    public AsynchronousMethodCaller(Channel channel, AsyncHandler<?> handler) {
         super(channel);
         if (handler == null) {
             throw new NullPointerException("handler");
         }
-        this.handler = new AsynchronousHandlerWrapper(handler);
+        this.handler = new AsyncHandlerWrapper(handler);
     }
 
     @Override
@@ -34,34 +31,34 @@ public class AsynchronousMethodCaller extends AbstractMethodCaller {
         timeoutTask.setHold(TimerHolder.newTimeout(timeoutTask, timeout.value(), timeout.unit()));
         writeTask.addListener(timeoutTask);
         writeTask.write(Remote.Type.ASYNC);
-        return super.invoke(proxy, method, args);
+        return Context.takeTypeDefaultValue(method.getReturnType());
     }
 
-    static class AsynchronousHandlerWrapper<V> implements AsynchronousHandler<V> {
+    static class AsyncHandlerWrapper<V> implements AsyncHandler<V> {
 
-        private final AsynchronousHandler<V> listener;
+        private final AsyncHandler<V> handler;
 
-        AsynchronousHandlerWrapper(AsynchronousHandler<V> listener) {
-            if (listener == null) {
+        AsyncHandlerWrapper(AsyncHandler<V> handler) {
+            if (handler == null) {
                 throw new NullPointerException("handler");
             }
-            this.listener = listener;
+            this.handler = handler;
         }
 
         @Override
         public void completed(ChannelFuture<V> future) {
-            future.channel().runTaskWithContext(() -> listener.completed(future));
+            future.channel().runTaskWithContext(() -> handler.completed(future));
         }
     }
 
-    static class TimeoutTask implements TimerTask, AsynchronousHandler<Object> {
+    static class TimeoutTask implements TimerTask, AsyncHandler<Object> {
 
-        private final WriteTask mMethod;
-        private final AsynchronousHandler handler;
+        private final WriteTask task;
+        private final AsyncHandler handler;
         private volatile io.netty.util.Timeout hold;
 
-        TimeoutTask(WriteTask method, AsynchronousHandler handler) {
-            this.mMethod = method;
+        TimeoutTask(WriteTask task, AsyncHandler handler) {
+            this.task = task;
             this.handler = handler;
         }
 
@@ -78,7 +75,7 @@ public class AsynchronousMethodCaller extends AbstractMethodCaller {
 
         @Override
         public void run(io.netty.util.Timeout timeout) {
-            this.mMethod.setFailure(new TimeoutException());
+            this.task.setFailure(new TimeoutException());
         }
     }
 }
