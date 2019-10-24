@@ -12,7 +12,7 @@ public class AppMain {
         RPCServer server = new RPCServer().bind(new InetSocketAddress(8000));
         server.addService(new LoginManagerImpl());
 
-        RPCClient client = new RPCClient().setAddress(new InetSocketAddress(8000)).connect();
+        RPCClient client = new RPCClient().setAddress(new InetSocketAddress(8000));
 
 
         AsyncHandler listener = new AsyncHandler<Integer>() {

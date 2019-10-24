@@ -98,7 +98,7 @@ public class RPCClient extends Context implements Remote {
 
     private Channel ensureNonNull() {
         if (mChannel == null) {
-            this.mChannel = (Channel) b.connect(new InetSocketAddress(0)).channel();
+            this.mChannel = (Channel) b.register().channel();
         }
         return this.mChannel;
     }
