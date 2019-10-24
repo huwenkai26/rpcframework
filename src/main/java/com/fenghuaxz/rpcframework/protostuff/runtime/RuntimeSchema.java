@@ -73,7 +73,7 @@ public final class RuntimeSchema<T> implements Schema<T>, FieldMap<T> {
                     schema);
 
         throw new RuntimeException(
-                "RuntimeSchema.addHook is only supported on DefaultIdStrategy");
+                "RuntimeSchema.register is only supported on DefaultIdStrategy");
     }
 
     /**
@@ -87,7 +87,7 @@ public final class RuntimeSchema<T> implements Schema<T>, FieldMap<T> {
             return ((DefaultIdStrategy) RuntimeEnv.ID_STRATEGY).registerPojo(typeClass);
 
         throw new RuntimeException(
-                "RuntimeSchema.addHook is only supported on DefaultIdStrategy");
+                "RuntimeSchema.register is only supported on DefaultIdStrategy");
     }
 
     /**

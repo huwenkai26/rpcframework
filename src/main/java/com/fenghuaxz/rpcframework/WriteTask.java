@@ -69,7 +69,14 @@ public final class WriteTask<V> extends IFutureBase<V, AsyncHandler<V>> implemen
 
     @Override
     public void setFailure(Throwable cause) {
+        doCompleted(mMethod, mChannel, null, cause);
         super.setFailure(cause);
+    }
+
+    @Override
+    protected void setSuccess(Object result) {
+        doCompleted(mMethod, mChannel, result, null);
+        super.setSuccess(result);
     }
 
     static void doInactive(Channel channel) {
@@ -81,7 +88,6 @@ public final class WriteTask<V> extends IFutureBase<V, AsyncHandler<V>> implemen
         if ((map = infos.get(channel)) != null) {
             final WriteTask task;
             if ((task = map.remove(response.getId())) != null) {
-                doCompleted(task.mMethod, channel, response.getResult(), response.getCause());
                 final Throwable cause = response.getCause();
                 if (cause != null)
                     task.setFailure(cause);

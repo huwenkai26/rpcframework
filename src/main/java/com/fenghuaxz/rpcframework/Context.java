@@ -4,6 +4,7 @@ import com.fenghuaxz.rpcframework.annotations.Nullable;
 import com.fenghuaxz.rpcframework.annotations.Rpc;
 import io.netty.util.internal.ConcurrentSet;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +20,7 @@ public abstract class Context {
 
 
     Context() {
-        addHook(new Nullable.EmptyParameterValidator());
+        register(new Nullable.EmptyParameterValidator());
     }
 
     public abstract void dispose();
@@ -32,30 +33,32 @@ public abstract class Context {
         return service;
     }
 
-    public <T extends Service> void addService(T service) {
-        if (service == null) {
-            throw new NullPointerException("service");
+    public <T extends Service> void register(T... services) {
+        if (services == null) {
+            throw new NullPointerException("services");
         }
 
-        for (Template template : service.newTemplates()) {
-            this.mTemplates.put(template.getClass(), template);
-        }
-
-        for (Class<?> cls : service.getClass().getInterfaces()) {
-            Rpc rpc;
-            if ((rpc = cls.getAnnotation(Rpc.class)) == null) {
-                throw new IllegalStateException("Must @Rpc in: " + cls.getName());
+        for (Service service : services) {
+            for (Template template : service.newTemplates()) {
+                this.mTemplates.put(template.getClass(), template);
             }
-            String name = rpc.value();
-            this.mServices.put(name.isEmpty() ? cls.getName() : name, service);
+
+            for (Class<?> cls : service.getClass().getInterfaces()) {
+                Rpc rpc;
+                if ((rpc = cls.getAnnotation(Rpc.class)) == null) {
+                    throw new IllegalStateException("Must @Rpc in: " + cls.getName());
+                }
+                String name = rpc.value();
+                this.mServices.put(name.isEmpty() ? cls.getName() : name, service);
+            }
         }
     }
 
-    public <T extends Hook> void addHook(T hook) {
-        if (hook == null) {
-            throw new NullPointerException("hook");
+    public <T extends Hook> void register(T... hooks) {
+        if (hooks == null) {
+            throw new NullPointerException("hooks");
         }
-        this.mHooks.add(hook);
+        this.mHooks.addAll(Arrays.asList(hooks));
     }
 
     @SuppressWarnings("unchecked")

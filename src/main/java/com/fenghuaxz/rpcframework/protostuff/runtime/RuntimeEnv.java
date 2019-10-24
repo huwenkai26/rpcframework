@@ -35,7 +35,7 @@ public final class RuntimeEnv {
     public static final boolean ENUMS_BY_NAME;
 
     /**
-     * Enabled by default. For security purposes, you probably would want to addHook all known classes and disable this
+     * Enabled by default. For security purposes, you probably would want to register all known classes and disable this
      * option.
      */
     public static final boolean AUTO_LOAD_POLYMORPHIC_CLASSES;

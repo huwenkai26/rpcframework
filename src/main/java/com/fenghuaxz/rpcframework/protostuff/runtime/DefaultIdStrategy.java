@@ -259,7 +259,7 @@ public final class DefaultIdStrategy extends IdStrategy {
                 .get(clazz);
         if (factory == null && clazz.getName().startsWith("java.util")) {
             // jdk collection
-            // better not to addHook the jdk collection if using this strategy
+            // better not to register the jdk collection if using this strategy
             // as it saves space by not writing the full package
             output.writeString(fieldNumber, clazz.getSimpleName(), false);
         } else {
@@ -301,7 +301,7 @@ public final class DefaultIdStrategy extends IdStrategy {
         final MapSchema.MessageFactory factory = mapMapping.get(clazz);
         if (factory == null && clazz.getName().startsWith("java.util")) {
             // jdk map
-            // better not to addHook the jdk map if using this strategy
+            // better not to register the jdk map if using this strategy
             // as it saves space by not writing the full package
             output.writeString(fieldNumber, clazz.getSimpleName(), false);
         } else {
